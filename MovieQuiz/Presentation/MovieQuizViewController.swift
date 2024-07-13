@@ -1,7 +1,9 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    // MARK: - Outlet
+
+    // MARK: - Outlets
+  
     @IBOutlet private weak var yesButton: UIButton!
     @IBOutlet private weak var noButton: UIButton!
     @IBOutlet private weak var imageView: UIImageView!
