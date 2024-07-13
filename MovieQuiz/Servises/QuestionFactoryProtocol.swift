@@ -8,6 +8,5 @@
 import Foundation
 
 protocol QuestionFactoryProtocol {
-    var questions: [QuizQuestion] { get }
-    func requestNextQuestion() -> QuizQuestion?
+    func requestNextQuestion()
 }
