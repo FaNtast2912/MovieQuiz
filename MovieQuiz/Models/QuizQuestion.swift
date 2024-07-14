@@ -6,8 +6,6 @@
 //
 
 import Foundation
-
-// Mock Question data
 struct QuizQuestion {
     let image: String
     let text: String

@@ -6,8 +6,6 @@
 //
 
 import Foundation
-
-// Alert after game
 struct QuizResultsViewModel {
     let title: String
     let text: String

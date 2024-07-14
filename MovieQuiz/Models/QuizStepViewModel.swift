@@ -7,8 +7,6 @@
 
 import Foundation
 import UIKit
-
-// Question Showed
 struct QuizStepViewModel {
     let image: UIImage
     let question: String
