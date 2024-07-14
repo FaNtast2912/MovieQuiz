@@ -21,11 +21,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         
+        
         let questionFactory = QuestionFactory()
             questionFactory.delegate = self
             self.questionFactory = questionFactory
         
-        questionFactory.requestNextQuestion() 
+        questionFactory.requestNextQuestion()
+        alertPresenter = AlertPresenter(delegate: self)
         
     }
     
@@ -49,6 +51,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol? 
     private var currentQuestion: QuizQuestion?
+    private var alertPresenter: AlertPresenterProtocol?
     
     // MARK: - Buttons
     
@@ -106,31 +109,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // next screen or restart game
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
-            let alertScreen = QuizResultsViewModel(title: "Этот раунд окончен!", text: "Ваш результат \(correctAnswers)/10", buttonText: "Сыграть еще раз")
-            show(quiz: alertScreen)
+            let endGameScreen = AlertModel(title: "Этот раунд окончен!", message: "Ваш результат \(correctAnswers)/10", buttonText: "Сыграть еще раз") {[weak self] in
+                guard let self = self else {return}
+                self.currentQuestionIndex = 0
+                self.correctAnswers = 0
+                questionFactory?.requestNextQuestion()
+            }
+            alertPresenter?.showEndGameScreen(model: endGameScreen)
             
         } else {
             currentQuestionIndex += 1
             questionFactory?.requestNextQuestion()
         }
     }
-    
-    // set alert and show message
-    private func show(quiz result: QuizResultsViewModel) {
-        let alertController = UIAlertController(title: result.title, message: result.text, preferredStyle: .alert)
-        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
-            guard let self = self else {return}
-            self.currentQuestionIndex = 0
-            self.correctAnswers = 0
-            questionFactory?.requestNextQuestion()
-            
-            
-        }
-        
-        alertController.addAction(action)
-        
-        self.present(alertController, animated: true, completion: nil)
-        
-    }
-
 }
