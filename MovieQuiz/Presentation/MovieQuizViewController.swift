@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
 
     // MARK: - Outlets
 
@@ -57,14 +57,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         guard currentQuestion != nil else {return}
-        showAnswerResult(isCorrect: true) // проверь как работает в прошлом проекте
+        let givenAnswer = currentQuestion?.correctAnswer
+        showAnswerResult(isCorrect: givenAnswer == true) // проверь как работает в прошлом проекте
         yesButton.isEnabled = false
         noButton.isEnabled = false
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         guard currentQuestion != nil else {return}
-        showAnswerResult(isCorrect: false) // проверь как работает в прошлом проекте
+        let givenAnswer = currentQuestion?.correctAnswer
+        showAnswerResult(isCorrect: givenAnswer == false) // проверь как работает в прошлом проекте
         noButton.isEnabled = false
         yesButton.isEnabled = false
     }
@@ -106,16 +108,21 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
     }
     
+    
+    func setAlertModel() -> AlertModel {
+        let endGameScreen = AlertModel(title: "Этот раунд окончен!", message: "Ваш результат \(correctAnswers)/10", buttonText: "Сыграть еще раз") {[weak self] in
+            guard let self = self else {return}
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            questionFactory?.requestNextQuestion()
+        }
+        return endGameScreen
+    }
+    
     // next screen or restart game
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
-            let endGameScreen = AlertModel(title: "Этот раунд окончен!", message: "Ваш результат \(correctAnswers)/10", buttonText: "Сыграть еще раз") {[weak self] in
-                guard let self = self else {return}
-                self.currentQuestionIndex = 0
-                self.correctAnswers = 0
-                questionFactory?.requestNextQuestion()
-            }
-            alertPresenter?.showEndGameScreen(model: endGameScreen)
+            alertPresenter?.showEndGameScreen(model: setAlertModel())
             
         } else {
             currentQuestionIndex += 1

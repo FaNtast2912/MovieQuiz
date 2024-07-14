@@ -8,5 +8,5 @@
 import Foundation
 
 protocol AlertPresenterDelegate {
-    
+    func setAlertModel() -> AlertModel
 }
