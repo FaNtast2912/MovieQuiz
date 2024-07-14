@@ -11,7 +11,20 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var textViewQuestion: UILabel!
     
-    // MARK: ViewDidload
+    // MARK: - Public Properties
+
+    // MARK: - Private Properties
+    
+    private var currentQuestionIndex = 0
+    private var correctAnswers = 0
+    private let questionsAmount: Int = 10
+    private var questionFactory: QuestionFactoryProtocol?
+    private var currentQuestion: QuizQuestion?
+    private var alertPresenter: AlertPresenterProtocol?
+    
+    // MARK: - Initializers
+
+    // MARK: - Overrides Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         // font set
@@ -31,29 +44,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         
     }
     
-    // MARK: - QuestionFactoryDelegate
-
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {return}
-
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-        }
-    }
-    
-    // MARK: - Constats and Variables
-    
-    private var currentQuestionIndex = 0
-    private var correctAnswers = 0
-    private let questionsAmount: Int = 10
-    private var questionFactory: QuestionFactoryProtocol? 
-    private var currentQuestion: QuizQuestion?
-    private var alertPresenter: AlertPresenterProtocol?
-    
-    // MARK: - Buttons
+    // MARK: - IB Actions
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         guard currentQuestion != nil else {return}
@@ -70,9 +61,37 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         noButton.isEnabled = false
         yesButton.isEnabled = false
     }
+
+    // MARK: - Public Methods
+    
+    func setAlertModel() -> AlertModel {
+        let endGameScreen = AlertModel(
+            title: "Этот раунд окончен!",
+            message: "Ваш результат \(correctAnswers)/10",
+            buttonText: "Сыграть еще раз") {[weak self] in
+            guard let self = self else {return}
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            questionFactory?.requestNextQuestion()
+        }
+        return endGameScreen
+    }
     
     
-    // MARK: - Methods
+    // QuestionFactoryDelegate
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {return}
+
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {return}
+            self.show(quiz: viewModel)
+        }
+    }
+    
+    // MARK: - Private Methods
     
     // convert mok
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -98,27 +117,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         imageView.layer.cornerRadius = 20
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            
             guard let self = self else {return}
             self.yesButton.isEnabled = true
             self.noButton.isEnabled = true
             self.showNextQuestionOrResults()
-            self.imageView.layer.borderColor = UIColor.clear.cgColor 
-            
+            self.imageView.layer.borderColor = UIColor.clear.cgColor
         }
     }
-    
-    
-    func setAlertModel() -> AlertModel {
-        let endGameScreen = AlertModel(title: "Этот раунд окончен!", message: "Ваш результат \(correctAnswers)/10", buttonText: "Сыграть еще раз") {[weak self] in
-            guard let self = self else {return}
-            self.currentQuestionIndex = 0
-            self.correctAnswers = 0
-            questionFactory?.requestNextQuestion()
-        }
-        return endGameScreen
-    }
-    
     // next screen or restart game
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
