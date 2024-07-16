@@ -21,6 +21,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenterProtocol?
+    private var statisticService: StatisticServiceProtocol?
     
     // MARK: - Initializers
 
@@ -41,6 +42,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         
         questionFactory.requestNextQuestion()
         alertPresenter = AlertPresenter(delegate: self)
+        statisticService = StatisticService()
+        
         
     }
     
@@ -64,20 +67,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 
     // MARK: - Public Methods
     
-    func setAlertModel() -> AlertModel {
-        let endGameScreen = AlertModel(
-            title: "Этот раунд окончен!",
-            message: "Ваш результат \(correctAnswers)/10",
-            buttonText: "Сыграть еще раз") {[weak self] in
-            guard let self = self else {return}
-            self.currentQuestionIndex = 0
-            self.correctAnswers = 0
-            questionFactory?.requestNextQuestion()
-        }
-        return endGameScreen
-    }
-    
-    
     // QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {return}
@@ -88,6 +77,46 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {return}
             self.show(quiz: viewModel)
+        }
+    }
+    
+    // Setting Alert Model for show
+    func setAlertModel() -> AlertModel {
+        
+        guard let statisticService else {return AlertModel(title: "Ошибка", message: "error 1.01", buttonText: "Сыграть еще раз") {[weak self] in
+            guard let self = self else {return}
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            questionFactory?.requestNextQuestion()
+        }}
+        // store results
+        statisticService.store(correct: correctAnswers, total: questionsAmount)
+        
+        let endGameScreen = AlertModel(
+            title: "Этот раунд окончен!",
+            message: "Ваш результат \(correctAnswers)/10\n"
+            + "Количество сыгранных квизов: \(statisticService.gamesCount)\n"
+            + "Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n"
+            + "Средняя точность: \(String(format: "%.2f", (statisticService.totalAccuracy)))%",
+            buttonText: "Сыграть еще раз") {[weak self] in
+            guard let self = self else {return}
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            questionFactory?.requestNextQuestion()
+        }
+            
+        return endGameScreen
+    }
+    
+    // next screen or restart game
+    func showNextQuestionOrResults() {
+        
+        if currentQuestionIndex == questionsAmount - 1 {
+            alertPresenter?.showEndGameScreen(model: setAlertModel())
+            
+        } else {
+            currentQuestionIndex += 1
+            questionFactory?.requestNextQuestion()
         }
     }
     
@@ -122,16 +151,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self.noButton.isEnabled = true
             self.showNextQuestionOrResults()
             self.imageView.layer.borderColor = UIColor.clear.cgColor
-        }
-    }
-    // next screen or restart game
-    private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questionsAmount - 1 {
-            alertPresenter?.showEndGameScreen(model: setAlertModel())
-            
-        } else {
-            currentQuestionIndex += 1
-            questionFactory?.requestNextQuestion()
         }
     }
 }
