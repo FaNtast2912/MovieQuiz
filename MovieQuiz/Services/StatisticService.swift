@@ -15,6 +15,11 @@ class StatisticService: StatisticServiceProtocol {
         case correct
         case bestGame
         case gamesCount
+        case bestGameCorrect
+        case bestGameTotal
+        case bestGameDate
+        case totalAccuracy
+        
     }
     
     var gamesCount: Int {
@@ -23,17 +28,17 @@ class StatisticService: StatisticServiceProtocol {
     }
     
     var bestGame: GameResult {
-        get {GameResult(correct: storage.integer(forKey: "bestGameCorrect"), total: storage.integer(forKey: "bestGameTotal"), date: storage.object(forKey: "bestGameDate") as? Date ?? Date())}
+        get {GameResult(correct: storage.integer(forKey: Keys.bestGameCorrect.rawValue), total: storage.integer(forKey: Keys.bestGameTotal.rawValue), date: storage.object(forKey: Keys.bestGameDate.rawValue) as? Date ?? Date())}
         set {
-            storage.set(newValue.correct, forKey: "bestGameCorrect")
-            storage.set(newValue.total, forKey: "bestGameTotal")
-            storage.set(newValue.date, forKey: "bestGameDate")
+            storage.set(newValue.correct, forKey: Keys.bestGameCorrect.rawValue)
+            storage.set(newValue.total, forKey: Keys.bestGameTotal.rawValue)
+            storage.set(newValue.date, forKey: Keys.bestGameDate.rawValue)
         }
     }
     
     var totalAccuracy: Double {
-        get {storage.double(forKey: "totalAccuracy")}
-        set {storage.set(newValue, forKey: "totalAccuracy")}
+        get {storage.double(forKey: Keys.totalAccuracy.rawValue)}
+        set {storage.set(newValue, forKey: Keys.totalAccuracy.rawValue)}
     }
     
     var correct: Int {

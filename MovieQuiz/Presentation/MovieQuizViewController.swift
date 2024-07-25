@@ -89,8 +89,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self.correctAnswers = 0
             questionFactory?.requestNextQuestion()
         }}
-        // store results
-        statisticService.store(correct: correctAnswers, total: questionsAmount)
         
         let endGameScreen = AlertModel(
             title: "Этот раунд окончен!",
@@ -112,6 +110,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     func showNextQuestionOrResults() {
         
         if currentQuestionIndex == questionsAmount - 1 {
+            store() // Store results
             alertPresenter?.showEndGameScreen(model: setAlertModel())
             
         } else {
@@ -121,6 +120,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // MARK: - Private Methods
+    
+    // store results
+    private func store() {
+        guard let statisticService else {return}
+        statisticService.store(correct: correctAnswers, total: questionsAmount)
+    }
     
     // convert mok
     private func convert(model: QuizQuestion) -> QuizStepViewModel {

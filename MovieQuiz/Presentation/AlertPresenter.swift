@@ -26,9 +26,5 @@ class AlertPresenter: AlertPresenterProtocol {
         alertController.addAction(alertAction)
         
         delegate?.present(alertController, animated: true, completion: nil)
-        
-        
     }
-    
-    
 }
