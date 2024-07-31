@@ -28,7 +28,10 @@ class StatisticService: StatisticServiceProtocol {
     }
     
     var bestGame: GameResult {
-        get {GameResult(correct: storage.integer(forKey: Keys.bestGameCorrect.rawValue), total: storage.integer(forKey: Keys.bestGameTotal.rawValue), date: storage.object(forKey: Keys.bestGameDate.rawValue) as? Date ?? Date())}
+        get {GameResult(
+            correct: storage.integer(forKey: Keys.bestGameCorrect.rawValue),
+            total: storage.integer(forKey: Keys.bestGameTotal.rawValue),
+            date: storage.object(forKey: Keys.bestGameDate.rawValue) as? Date ?? Date())}
         set {
             storage.set(newValue.correct, forKey: Keys.bestGameCorrect.rawValue)
             storage.set(newValue.total, forKey: Keys.bestGameTotal.rawValue)
@@ -50,6 +53,7 @@ class StatisticService: StatisticServiceProtocol {
     func store(correct count: Int, total amount: Int) {
         correct += count
         gamesCount += 1
+        
         totalAccuracy = (Double(correct)/Double(10*gamesCount))*100
     
         

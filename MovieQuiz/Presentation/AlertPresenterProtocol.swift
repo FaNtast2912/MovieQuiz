@@ -8,5 +8,5 @@
 import Foundation
 
 protocol AlertPresenterProtocol {
-    func showEndGameScreen(model: AlertModel)
+    func showAlert(model: AlertModel)
 }

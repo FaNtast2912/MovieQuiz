@@ -17,7 +17,7 @@ class AlertPresenter: AlertPresenterProtocol {
         self.delegate = delegate
     }
     
-    func showEndGameScreen(model: AlertModel) {
+    func showAlert(model: AlertModel) {
         
         let alertController = UIAlertController(title: model.title, message: model.message, preferredStyle: .alert)
         let alertAction = UIAlertAction(title: model.buttonText, style: .default) { _ in
@@ -27,4 +27,6 @@ class AlertPresenter: AlertPresenterProtocol {
         
         delegate?.present(alertController, animated: true, completion: nil)
     }
+   
+    
 }
