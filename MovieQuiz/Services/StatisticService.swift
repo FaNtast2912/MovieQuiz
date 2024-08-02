@@ -28,10 +28,13 @@ class StatisticService: StatisticServiceProtocol {
     }
     
     var bestGame: GameResult {
-        get {GameResult(
-            correct: storage.integer(forKey: Keys.bestGameCorrect.rawValue),
-            total: storage.integer(forKey: Keys.bestGameTotal.rawValue),
-            date: storage.object(forKey: Keys.bestGameDate.rawValue) as? Date ?? Date())}
+        get {
+            GameResult(
+                correct: storage.integer(forKey: Keys.bestGameCorrect.rawValue),
+                total: storage.integer(forKey: Keys.bestGameTotal.rawValue),
+                date: storage.object(forKey: Keys.bestGameDate.rawValue) as? Date ?? Date())
+        }
+        
         set {
             storage.set(newValue.correct, forKey: Keys.bestGameCorrect.rawValue)
             storage.set(newValue.total, forKey: Keys.bestGameTotal.rawValue)
@@ -55,7 +58,7 @@ class StatisticService: StatisticServiceProtocol {
         gamesCount += 1
         
         totalAccuracy = (Double(correct)/Double(10*gamesCount))*100
-    
+        
         
         if GameResult(correct: count, total: amount, date: Date()).isBetterThen(bestGame) {
             bestGame = GameResult(correct: count, total: amount, date: Date())
