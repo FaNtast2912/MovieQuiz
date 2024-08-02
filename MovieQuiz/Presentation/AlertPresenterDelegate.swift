@@ -8,6 +8,5 @@
 import Foundation
 
 protocol AlertPresenterDelegate: AnyObject {
-    func setAlertModel() -> AlertModel
-    func showNextQuestionOrResults()
+    func showNextQuestionOrSaveShowResults()
 }
