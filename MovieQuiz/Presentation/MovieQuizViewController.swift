@@ -41,24 +41,23 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         imageView.layer.cornerRadius = 20
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         questionFactory?.loadData()
+        presenter.viewController = self
     }
     
     // MARK: - IB Actions
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard currentQuestion != nil else {return}
-        let givenAnswer = currentQuestion?.correctAnswer
-        showAnswerResult(isCorrect: givenAnswer == true) // проверь как работает в прошлом проекте
+        presenter.currentQuestion = currentQuestion
+        presenter.yesButtonClicked()
         yesButton.isEnabled = false
         noButton.isEnabled = false
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard currentQuestion != nil else {return}
-        let givenAnswer = currentQuestion?.correctAnswer
-        showAnswerResult(isCorrect: givenAnswer == false) // проверь как работает в прошлом проекте
-        noButton.isEnabled = false
+        presenter.currentQuestion = currentQuestion
+        presenter.noButtonClicked()
         yesButton.isEnabled = false
+        noButton.isEnabled = false
     }
 
     // MARK: - Public Methods
@@ -167,7 +166,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // react on answer
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
         }
