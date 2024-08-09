@@ -15,10 +15,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // MARK: - Public Properties
 
     // MARK: - Private Properties
-    
-    private var currentQuestionIndex = 0
+    private let presenter = MovieQuizPresenter()
     private var correctAnswers = 0
-    private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenterProtocol?
@@ -79,7 +77,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         guard let question = question else {return}
 
         currentQuestion = question
-        let viewModel = convert(model: question)
+        let viewModel = presenter.convert(model: question)
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {return}
@@ -91,7 +89,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     func setNetworkErrorAlertModel(errorMessage: String) -> AlertModel {
         let model = AlertModel(title: "Ошибка", message: errorMessage, buttonText: "Попробовать еще раз") { [weak self] in
             guard let self = self else { return }
-            self.currentQuestionIndex = 0
+            presenter.resetQuestionIndex()
             self.correctAnswers = 0
             self.questionFactory?.requestNextQuestion()
         }
@@ -103,7 +101,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         
         guard let statisticService else {return AlertModel(title: "Ошибка", message: "error 1.01", buttonText: "Сыграть еще раз") {[weak self] in
             guard let self = self else {return}
-            self.currentQuestionIndex = 0
+            presenter.resetQuestionIndex()
             self.correctAnswers = 0
             questionFactory?.requestNextQuestion()
         }}
@@ -116,7 +114,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             + "Средняя точность: \(String(format: "%.2f", (statisticService.totalAccuracy)))%",
             buttonText: "Сыграть еще раз") {[weak self] in
             guard let self = self else {return}
-            self.currentQuestionIndex = 0
+            presenter.resetQuestionIndex()
             self.correctAnswers = 0
             questionFactory?.requestNextQuestion()
         }
@@ -126,12 +124,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // next screen or restart game
     func showNextQuestionOrSaveShowResults() {
         
-        if currentQuestionIndex == questionsAmount - 1 {
+        if presenter.isLastQuestion() {
             store() // Store results
             alertPresenter?.showAlert(model: setEndGameAlertModel()) // Show End Game Alert
             
         } else {
-            currentQuestionIndex += 1
+            presenter.switchToNextQuestion()
             questionFactory?.requestNextQuestion()
         }
     }
@@ -158,12 +156,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // store results
     private func store() {
         guard let statisticService else {return}
-        statisticService.store(correct: correctAnswers, total: questionsAmount)
-    }
-    
-    // convert mok
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        return QuizStepViewModel(image: UIImage(data: model.image) ?? UIImage(), question: model.text, questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+        statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
     }
     
     // set our screen
