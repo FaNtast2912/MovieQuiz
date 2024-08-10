@@ -8,19 +8,26 @@
 import Foundation
 import UIKit
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate, MovieQuizPresenterProtocol {
     
     // MARK: - Public Properties
-    weak var viewController: MovieQuizViewController?
-    weak var questionFactory: QuestionFactoryProtocol?
     let questionsAmount: Int = 10
     var currentQuestion: QuizQuestion?
     var correctAnswers: Int = 0
     
     // MARK: - Private Properties
     private var currentQuestionIndex: Int = 0
+    private weak var viewController: MovieQuizViewController?
+    private var questionFactory: QuestionFactoryProtocol?
     
-    
+    // MARK: - Initializers
+    init(viewController: MovieQuizViewController) {
+        self.viewController = viewController
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
+    }
     // MARK: - Public Methods
     func yesButtonClicked() {
         didAnswer(isYes: true)
@@ -37,26 +44,15 @@ final class MovieQuizPresenter {
     func restartGame() {
         currentQuestionIndex = 0
         correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
     
     func switchToNextQuestion() {
         currentQuestionIndex += 1
     }
     
-    func didRecieveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
-        
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            self?.viewController?.show(quiz: viewModel)
-        }
-    }
-    
     func didAnswer(isCorrectAnswer: Bool) {
-        if isCorrectAnswer { 
+        if isCorrectAnswer {
             correctAnswers += 1
         }
     }
@@ -65,7 +61,7 @@ final class MovieQuizPresenter {
     func showNextQuestionOrResults() {
         if isLastQuestion() {
             let text = "Вы ответили на \(correctAnswers) из 10, попробуйте еще раз!"
-    
+            
             let viewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен!",
                 text: text,
@@ -76,6 +72,30 @@ final class MovieQuizPresenter {
             questionFactory?.requestNextQuestion()
         }
     }
+    
+    // MARK: - QuestionFactoryDelegate
+        
+        func didLoadDataFromServer() {
+            viewController?.hideLoadingIndicator()
+            questionFactory?.requestNextQuestion()
+        }
+        
+        func didFailToLoadData(with error: Error) {
+            let message = error.localizedDescription
+            viewController?.showNetworkError(message: message)
+        }
+        
+        func didRecieveNextQuestion(question: QuizQuestion?) {
+            guard let question = question else {
+                return
+            }
+            
+            currentQuestion = question
+            let viewModel = convert(model: question)
+            DispatchQueue.main.async { [weak self] in
+                self?.viewController?.show(quiz: viewModel)
+            }
+        }
     
     // MARK: - Private Methods
     func convert(model: QuizQuestion) -> QuizStepViewModel {
