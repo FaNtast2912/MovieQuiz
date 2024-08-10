@@ -35,7 +35,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         
-        alertPresenter = AlertPresenter(delegate: self)
+        alertPresenter = AlertPresenter()
         statisticService = StatisticService()
         showLoadingIndicator()
         imageView.layer.cornerRadius = 20
@@ -85,43 +85,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         return model
     }
     
-    // Setting Alert Model for show End Game Result
-    func setEndGameAlertModel() -> AlertModel {
-        
-        guard let statisticService else {return AlertModel(title: "Ошибка", message: "error 1.01", buttonText: "Сыграть еще раз") {[weak self] in
-            guard let self = self else {return}
-            presenter.resetQuestionIndex()
-            self.correctAnswers = 0
-            questionFactory?.requestNextQuestion()
-        }}
-        
-        let endGameScreen = AlertModel(
-            title: "Этот раунд окончен!",
-            message: "Ваш результат \(correctAnswers)/10\n"
-            + "Количество сыгранных квизов: \(statisticService.gamesCount)\n"
-            + "Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n"
-            + "Средняя точность: \(String(format: "%.2f", (statisticService.totalAccuracy)))%",
-            buttonText: "Сыграть еще раз") {[weak self] in
-                guard let self = self else {return}
-                presenter.resetQuestionIndex()
-                self.correctAnswers = 0
-                questionFactory?.requestNextQuestion()
-            }
-        return endGameScreen
-    }
     
-    // next screen or restart game
-    func showNextQuestionOrSaveShowResults() {
-        
-        if presenter.isLastQuestion() {
-            store() // Store results
-            alertPresenter?.showAlert(in: self, model: setEndGameAlertModel()) // Show End Game Alert
-            
-        } else {
-            presenter.switchToNextQuestion()
-            questionFactory?.requestNextQuestion()
-        }
-    }
+//    // next screen or restart game
+//    private func showNextQuestionOrResults() {
+//        if presenter.isLastQuestion() {
+//            let text = "Вы ответили на \(correctAnswers) из 10, попробуйте еще раз!"
+//    
+//            let viewModel = QuizResultsViewModel(
+//                title: "Этот раунд окончен!",
+//                text: text,
+//                buttonText: "Сыграть ещё раз")
+//            show(quiz: viewModel)
+//        } else {
+//            presenter.switchToNextQuestion()
+//            questionFactory?.requestNextQuestion()
+//        }
+//    }
     
     // MARK: - Private Methods
     
@@ -155,6 +134,38 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         counterLabel.text = step.questionNumber
     }
     
+    func show(quiz result: QuizResultsViewModel) {
+        var message = result.text
+        if let statisticService = statisticService {
+            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
+
+            let bestGame = statisticService.bestGame
+
+            let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesCount)"
+            let currentGameResultLine = "Ваш результат: \(correctAnswers)\\\(presenter.questionsAmount)"
+            let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)"
+            + " (\(bestGame.date.dateTimeString))"
+            let averageAccuracyLine = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
+
+            let resultMessage = [
+                currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine
+            ].joined(separator: "\n")
+
+            message = resultMessage
+        }
+
+        let model = AlertModel(title: result.title, message: message, buttonText: result.buttonText) { [weak self] in
+            guard let self = self else { return }
+
+            presenter.resetQuestionIndex()
+            self.correctAnswers = 0
+
+            self.questionFactory?.requestNextQuestion()
+        }
+
+        alertPresenter?.showAlert(in: self, model: model)
+    }
+    
     // react on answer
     func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
@@ -170,7 +181,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             guard let self = self else {return}
             self.yesButton.isEnabled = true
             self.noButton.isEnabled = true
-            self.showNextQuestionOrSaveShowResults()
+            self.presenter.showNextQuestionOrResults()
+            self.presenter.correctAnswers = self.correctAnswers
+            self.presenter.questionFactory = self.questionFactory
             self.imageView.layer.borderColor = UIColor.clear.cgColor
         }
     }

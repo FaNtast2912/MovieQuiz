@@ -12,8 +12,10 @@ final class MovieQuizPresenter {
     
     // MARK: - Public Properties
     weak var viewController: MovieQuizViewController?
+    weak var questionFactory: QuestionFactoryProtocol?
     let questionsAmount: Int = 10
     var currentQuestion: QuizQuestion?
+    var correctAnswers: Int = 0
     
     // MARK: - Private Properties
     private var currentQuestionIndex: Int = 0
@@ -49,6 +51,22 @@ final class MovieQuizPresenter {
         let viewModel = convert(model: question)
         DispatchQueue.main.async { [weak self] in
             self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    // next screen or restart game
+    func showNextQuestionOrResults() {
+        if isLastQuestion() {
+            let text = "Вы ответили на \(correctAnswers) из 10, попробуйте еще раз!"
+    
+            let viewModel = QuizResultsViewModel(
+                title: "Этот раунд окончен!",
+                text: text,
+                buttonText: "Сыграть ещё раз")
+            viewController?.show(quiz: viewModel)
+        } else {
+            self.switchToNextQuestion()
+            questionFactory?.requestNextQuestion()
         }
     }
     
