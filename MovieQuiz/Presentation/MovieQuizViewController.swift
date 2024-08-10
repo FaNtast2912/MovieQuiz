@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
+final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, MovieQuizViewControllerProtocol {
     
     // MARK: - Outlets
     
@@ -16,9 +16,7 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     
     // MARK: - Private Properties
     private var presenter: MovieQuizPresenterProtocol?
-    private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenterProtocol?
-    private var statisticService: StatisticServiceProtocol?
     
     // MARK: - Initializers
     
@@ -33,7 +31,6 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         
         alertPresenter = AlertPresenter()
-        statisticService = StatisticService()
         showLoadingIndicator()
         imageView.layer.cornerRadius = 20
         presenter = MovieQuizPresenter(viewController: self)
@@ -55,16 +52,44 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     
     // MARK: - Public Methods
     
-    // Setting Alert Model for show Network Error
-    func setNetworkErrorAlertModel(errorMessage: String) -> AlertModel {
-        let model = AlertModel(title: "Ошибка", message: errorMessage, buttonText: "Попробовать еще раз") { [weak self] in
-            guard let self = self else { return }
-            presenter?.restartGame()
-        }
-        return model
+    func show(quiz step: QuizStepViewModel) {
+        imageView.image = step.image
+        textLabel.text = step.question
+        counterLabel.text = step.questionNumber
     }
     
-    // MARK: - Private Methods
+    func show(quiz result: QuizResultsViewModel) {
+        guard let message = presenter?.makeResultsMessage() else { return }
+        
+        let alert = UIAlertController(
+            title: result.title,
+            message: message,
+            preferredStyle: .alert)
+        
+        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            
+            self.presenter?.restartGame()
+        }
+        
+        alert.addAction(action)
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    func highlightImageBorder(isCorrectAnswer: Bool) {
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 8
+        imageView.layer.borderColor = isCorrectAnswer ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
+    }
+    func clearImageBorder() {
+        imageView.layer.borderColor = UIColor.clear.cgColor
+    }
+    
+    func unableButton() {
+        self.yesButton.isEnabled = true
+        self.noButton.isEnabled = true
+    }
     
     //Show Loading Indicator
     func showLoadingIndicator() {
@@ -84,58 +109,16 @@ final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
         self.presenter?.restartGame()
     }
     
-    func show(quiz step: QuizStepViewModel) {
-        imageView.image = step.image
-        textLabel.text = step.question
-        counterLabel.text = step.questionNumber
-    }
     
-    func show(quiz result: QuizResultsViewModel) {
-        var message = result.text
-        if let statisticService = statisticService {
-            statisticService.store(correct: presenter?.correctAnswers ?? 0, total: presenter?.questionsAmount ?? 0)
-
-            let bestGame = statisticService.bestGame
-
-            let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesCount)"
-            let currentGameResultLine = "Ваш результат: \(presenter?.correctAnswers ?? 0)\\\(presenter?.questionsAmount ?? 0)"
-            let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)"
-            + " (\(bestGame.date.dateTimeString))"
-            let averageAccuracyLine = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
-
-            let resultMessage = [
-                currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine
-            ].joined(separator: "\n")
-
-            message = resultMessage
-        }
-
-        let model = AlertModel(title: result.title, message: message, buttonText: result.buttonText) { [weak self] in
+    
+    // MARK: - Private Methods
+    
+    // Setting Alert Model for show Network Error
+    private func setNetworkErrorAlertModel(errorMessage: String) -> AlertModel {
+        let model = AlertModel(title: "Ошибка", message: errorMessage, buttonText: "Попробовать еще раз") { [weak self] in
             guard let self = self else { return }
-
             presenter?.restartGame()
         }
-
-        alertPresenter?.showAlert(in: self, model: model)
-    }
-    
-    // react on answer
-    func showAnswerResult(isCorrect: Bool) {
-        if isCorrect {
-            presenter?.didAnswer(isCorrectAnswer: isCorrect)
-        }
-        
-        imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 8
-        imageView.layer.borderColor = isCorrect == true ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        imageView.layer.cornerRadius = 20
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else {return}
-            self.yesButton.isEnabled = true
-            self.noButton.isEnabled = true
-            self.imageView.layer.borderColor = UIColor.clear.cgColor
-            self.presenter?.showNextQuestionOrResults()
-        }
+        return model
     }
 }

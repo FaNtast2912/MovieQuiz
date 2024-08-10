@@ -69,7 +69,7 @@ class MovieQuizUITests: XCTestCase {
     
     func testAlert() {
         sleep(2)
-        for i in 0...10 {
+        for _ in 0...10 {
             app.buttons["No"].tap()
             sleep(2)
         }
