@@ -16,7 +16,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // MARK: - Private Properties
     private let presenter = MovieQuizPresenter()
-    private var correctAnswers = 0
+//    private var correctAnswers = 0
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenterProtocol?
@@ -78,8 +78,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     func setNetworkErrorAlertModel(errorMessage: String) -> AlertModel {
         let model = AlertModel(title: "Ошибка", message: errorMessage, buttonText: "Попробовать еще раз") { [weak self] in
             guard let self = self else { return }
-            presenter.resetQuestionIndex()
-            self.correctAnswers = 0
+            presenter.restartGame()
             self.questionFactory?.requestNextQuestion()
         }
         return model
@@ -122,10 +121,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // store results
-    private func store() {
-        guard let statisticService else {return}
-        statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
-    }
+    //    private func store() {
+    //        guard let statisticService else {return}
+    //        statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
+    //    }
     
     // set our screen
     func show(quiz step: QuizStepViewModel) {
@@ -137,12 +136,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     func show(quiz result: QuizResultsViewModel) {
         var message = result.text
         if let statisticService = statisticService {
-            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
+            statisticService.store(correct: presenter.correctAnswers, total: presenter.questionsAmount)
 
             let bestGame = statisticService.bestGame
 
             let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesCount)"
-            let currentGameResultLine = "Ваш результат: \(correctAnswers)\\\(presenter.questionsAmount)"
+            let currentGameResultLine = "Ваш результат: \(presenter.correctAnswers)\\\(presenter.questionsAmount)"
             let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)"
             + " (\(bestGame.date.dateTimeString))"
             let averageAccuracyLine = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
@@ -157,8 +156,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         let model = AlertModel(title: result.title, message: message, buttonText: result.buttonText) { [weak self] in
             guard let self = self else { return }
 
-            presenter.resetQuestionIndex()
-            self.correctAnswers = 0
+            presenter.restartGame()
+            
 
             self.questionFactory?.requestNextQuestion()
         }
@@ -169,7 +168,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // react on answer
     func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
-            correctAnswers += 1
+            presenter.didAnswer(isCorrectAnswer: isCorrect)
         }
         
         imageView.layer.masksToBounds = true
@@ -181,10 +180,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             guard let self = self else {return}
             self.yesButton.isEnabled = true
             self.noButton.isEnabled = true
-            self.presenter.showNextQuestionOrResults()
-            self.presenter.correctAnswers = self.correctAnswers
-            self.presenter.questionFactory = self.questionFactory
             self.imageView.layer.borderColor = UIColor.clear.cgColor
+            self.presenter.showNextQuestionOrResults()
+            self.presenter.questionFactory = self.questionFactory
         }
     }
 }
