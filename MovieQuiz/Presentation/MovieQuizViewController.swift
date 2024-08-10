@@ -47,14 +47,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // MARK: - IB Actions
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        presenter.currentQuestion = currentQuestion
         presenter.yesButtonClicked()
         yesButton.isEnabled = false
         noButton.isEnabled = false
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        presenter.currentQuestion = currentQuestion
         presenter.noButtonClicked()
         yesButton.isEnabled = false
         noButton.isEnabled = false
@@ -125,7 +123,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         
         if presenter.isLastQuestion() {
             store() // Store results
-            alertPresenter?.showAlert(model: setEndGameAlertModel()) // Show End Game Alert
+            alertPresenter?.showAlert(in: self, model: setEndGameAlertModel()) // Show End Game Alert
             
         } else {
             presenter.switchToNextQuestion()
@@ -149,7 +147,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     private func showNetworkError(message: String) {
         hideLoadingIndicator() // скрываем индикатор загрузки
-        alertPresenter?.showAlert(model: setNetworkErrorAlertModel(errorMessage: message))// создайте и покажите алерт
+        alertPresenter?.showAlert(in: self, model: setNetworkErrorAlertModel(errorMessage: message))// создайте и покажите алерт
     }
     
     // store results

@@ -17,7 +17,7 @@ class AlertPresenter: AlertPresenterProtocol {
         self.delegate = delegate
     }
     
-    func showAlert(model: AlertModel) {
+    func showAlert(in vc: UIViewController, model: AlertModel) {
         
         let alertController = UIAlertController(title: model.title, message: model.message, preferredStyle: .alert)
         let alertAction = UIAlertAction(title: model.buttonText, style: .default) { _ in
@@ -25,7 +25,7 @@ class AlertPresenter: AlertPresenterProtocol {
         }
         alertController.addAction(alertAction)
         
-        delegate?.present(alertController, animated: true, completion: nil)
+        vc.present(alertController, animated: true, completion: nil)
     }
    
     

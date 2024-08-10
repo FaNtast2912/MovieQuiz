@@ -10,27 +10,22 @@ import UIKit
 
 final class MovieQuizPresenter {
     
-    var currentQuestion: QuizQuestion?
+    // MARK: - Public Properties
     weak var viewController: MovieQuizViewController?
+    let questionsAmount: Int = 10
+    var currentQuestion: QuizQuestion?
     
+    // MARK: - Private Properties
+    private var currentQuestionIndex: Int = 0
+    
+    
+    // MARK: - Public Methods
     func yesButtonClicked() {
-        guard let currentQuestion = currentQuestion else { return }
-        let givenAnswer = true
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        didAnswer(isYes: true)
     }
     
     func noButtonClicked() {
-        guard let currentQuestion = currentQuestion else { return }
-        let givenAnswer = false
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-    }
-
-    
-    let questionsAmount: Int = 10
-    private var currentQuestionIndex: Int = 0
-    
-    func convert(model: QuizQuestion) -> QuizStepViewModel {
-        return QuizStepViewModel(image: UIImage(data: model.image) ?? UIImage(), question: model.text, questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+        didAnswer(isYes: false)
     }
     
     func isLastQuestion() -> Bool {
@@ -45,4 +40,16 @@ final class MovieQuizPresenter {
         currentQuestionIndex += 1
     }
     
+    // MARK: - Private Methods
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        return QuizStepViewModel(image: UIImage(data: model.image) ?? UIImage(), question: model.text, questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+    }
+    
+    private func didAnswer(isYes: Bool) {
+        guard let currentQuestion = currentQuestion else { return }
+        let givenAnswer = isYes
+        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    }
+    
 }
+
