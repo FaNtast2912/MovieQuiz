@@ -1,5 +1,7 @@
 ## **MovieQuiz**
 
+![MovieQuiz Demo](https://raw.githubusercontent.com/FaNtast2912/MovieQuiz/main/Demo/MovieQuizDemo.gif)  
+
 MovieQuiz - это приложение с квизами о фильмах из топ-250 рейтинга и самых популярных фильмах по версии IMDb.
 
 ## **Ссылки**
